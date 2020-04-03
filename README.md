@@ -8,7 +8,7 @@ for programmatic and event driven access to the server's data paths.
 
 ## Example
 ```
-var client = new SignalkClient("182.168.1.1", 3000);
+var client = new SignalkClient("192.168.1.1", 3000);
 client.waitForConnection().then(_ => {
    // do application specific stuff
 });
