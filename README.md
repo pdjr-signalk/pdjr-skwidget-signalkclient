@@ -1,6 +1,6 @@
 # signalk-client
 
-Library providing a web-client application interface to SignalK
+Library providing a web application interface to a Signal K server.
 
 The __signalk-client__ library implements the __SignalkClient__ class which
 supports WebSocket connection to a Signal K server and provides methods
