@@ -2,38 +2,48 @@
 
 Library providing a web-client application interface to SignalK
 
-The signalk-client library implements the __SignalkClient__ class which
+The __signalk-client__ library implements the __SignalkClient__ class which
 supports WebSocket connection to a Signal K server and provides methods
 for programmatic and event driven access to the server's data paths.
 
-Applications can extend the SignalkClient class using the following simple
-pattern:
+## Example
 ```
-super(host, port).waitForConnection().then(_ => {
+var client = new SignalkClient("182.168.1.1", 3000);
+client.waitForConnection().then(_ => {
    // do application specific stuff
 });
 ```
 
-## Creating a connection object
-```
-var client = new SignalkClient(host, port[, options]);
-```
-Returns a new SignalkClient object, associating it with the Signal K server
-identified by _host_:_port_.
+## Creating and managing a server connection
 
-The connection is attempted asynchronously and the constructor will inevitably
-return before the putative connection is in a usable state. Users should use
-the ```waitForConnection()``` method to manage this eventuality.
+A server connection is established by calling the __SignalkClient__
+constructor with the address of the Signal K server to which a websocket
+connection should be made.
+
+### new SignalkClient(host, port[, options]);
+
+Returns a new __SignalkClient__ object, associating it with the Signal K
+server identified by _host_:_port_.
 
 The _options_ object can be used to supply some additional configuration
 properties:
 
-options.debug: boolean value switching trace messaging on and off (default);
+_options_.__debug__ - boolean value switching trace messaging on or off (default);
 
-The waitForConnection([millis]) method returns a promise which will resolve
-when a connection with the server identified by _host_:_port_ is established.
-The frequency at which the connection is polled defaults to 500 milliseconds,
-but this can be adjusted by supplying the optional _millis_ argument.
+The server connection is made asynchronously and the constructor will inevitably
+return before the putative connection is in a usable state. The following two
+methods can be used to manage this situation.
+
+### isConnected()
+
+Returns true if the server connection is up.
+
+### waitForConnection(millis)
+
+Returns a promise which will resolve when the requested server connection is
+established.  The frequency at which the connection state is polled defaults to
+500 milliseconds, but this can be adjusted by supplying the optional _millis_
+argument.
 
 ## Methods for event driven data access
 
