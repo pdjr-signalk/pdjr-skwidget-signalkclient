@@ -60,6 +60,13 @@ class SignalkClient {
         }
     }
 
+    waitForConnection(timeout=500) {
+        const poll = resolve => {
+            if (this.ws.readyState === WebSocket.OPEN) { resolve(); } else { setTimeout(_ => poll(resolve), timeout); }
+        }
+        return new Promise(poll);
+    }
+
     isConnected() {
         return(this.ws != null);
     }
@@ -176,18 +183,5 @@ class SignalkClient {
         return(retval);
     }
 
-    waitForConnection(timeout=500) {
-        const poll = resolve => {
-            if (this.ws.readyState === WebSocket.OPEN) { resolve(); } else { setTimeout(_ => poll(resolve), timeout); }
-        }
-        return new Promise(poll);
-    }
-
-    static parseURL(url) {
-        var retval = null;
-        var parts = url.split(':');
-        if ((parts.length == 2) && (parts[0] == "signalk")) retval = parts[1];
-        return(retval);
-    }
 
 }
