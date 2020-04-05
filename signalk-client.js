@@ -60,15 +60,15 @@ class SignalkClient {
         }
     }
 
+    isConnected() {
+        return(this.ws != null);
+    }
+
     waitForConnection(timeout=500) {
         const poll = resolve => {
             if (this.ws.readyState === WebSocket.OPEN) { resolve(); } else { setTimeout(_ => poll(resolve), timeout); }
         }
         return new Promise(poll);
-    }
-
-    isConnected() {
-        return(this.ws != null);
     }
 
     getEndpoints(callback) {
@@ -136,7 +136,7 @@ class SignalkClient {
         var _callback = callback;
         var _filter = filter;
         
-        SignalK.httpGet(SignalK.normalisePath(path), (callback !== undefined), (v) => {
+        SignalkClient.httpGet(SignalkClient.normalisePath(path), (callback !== undefined), (v) => {
             v = JSON.parse(v);
             v = (_filter !== undefined)?_filter(v):((v.value !== undefined)?v.value:v);
             if (_callback !== undefined) {
