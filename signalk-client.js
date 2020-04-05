@@ -60,15 +60,15 @@ class SignalkClient {
         }
     }
 
+    isConnected() {
+        return(this.ws != null);
+    }
+
     waitForConnection(timeout=500) {
         const poll = resolve => {
             if (this.ws.readyState === WebSocket.OPEN) { resolve(); } else { setTimeout(_ => poll(resolve), timeout); }
         }
         return new Promise(poll);
-    }
-
-    isConnected() {
-        return(this.ws != null);
     }
 
     getEndpoints(callback) {
