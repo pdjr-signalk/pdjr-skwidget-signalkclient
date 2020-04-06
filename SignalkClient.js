@@ -60,6 +60,14 @@ class SignalkClient {
         }
     }
 
+    getHost() {
+        return(this.host);
+    }
+
+    getPort() {
+        return(this.port);
+    }
+
     isConnected() {
         return(this.ws != null);
     }
