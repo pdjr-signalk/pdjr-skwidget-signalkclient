@@ -111,15 +111,12 @@ class SignalkClient {
                 this.ws.send(JSON.stringify(msg));
         	}
 
-            var _filter = filter;
-            var _callback = callback;
-
             if (!this.directory[path].includes(callback)) {
-                this.directory[path].push(v => {
-                    v = (_filter !== undefined)?_filter(v):((v.value !== undefined)?v.value:v);
-                    switch (typeof _callback) {
-                        case "object": _callback.update(v); break;
-                        case "function": _callback(v); break;
+                this.directory[path].push((v) => {
+                    v = (filter)?filter(v):((v.value !== undefined)?v.value:v);
+                    switch (typeof callback) {
+                        case "object": callback.update(v); break;
+                        case "function": callback(v); break;
                         default: break;
                     }
                 });
@@ -131,26 +128,24 @@ class SignalkClient {
         }
     }
 
-    registerInterpolation(path, element, filter, callbackFilter) {
-        //console.log("registerInterpolation(%s,%s,%s,%s)...", path, element, filter, callbackFilter);
+    registerInterpolation(path, element, filter) {
+        //console.log("registerInterpolation(%s,%s,%s)...", path, element, filter);
  
-        this.registerCallback(path, function(v) { element.innerHTML = (filter)?filter(v):v; }, callbackFilter);
+        this.registerCallback(path, function(v) { element.innerHTML = v; }.bind(this), filter);
     }
 
     getValue(path, callback, filter) {
         //console.log("getValue(%s,%s,%s)...", path, callback, filter);
 
         var retval = null
-        var _callback = callback;
-        var _filter = filter;
         
         SignalkClient.httpGet(SignalkClient.normalisePath(path), (callback !== undefined), (v) => {
             v = JSON.parse(v);
-            v = (_filter !== undefined)?_filter(v):((v.value !== undefined)?v.value:v);
-            if (_callback !== undefined) {
-                switch (typeof _callback) {
-                    case "object": _callback.update(v); break;
-                    case "function": _callback(v); break;
+            v = (filter)?filter(v):((v.value !== undefined)?v.value:v);
+            if (callback !== undefined) {
+                switch (typeof callback) {
+                    case "object": callback.update(v); break;
+                    case "function": callback(v); break;
                     default: break;
                 }
             } else {
@@ -160,13 +155,10 @@ class SignalkClient {
         return(retval);
     }
 
-    interpolateValue(path, element, filter, getFilter) {
-        //console.log("interpolateValue(%s,%s,%s,%s)...", path, element, filter, getFilter);
+    interpolateValue(path, element, filter) {
+        //console.log("interpolateValue(%s,%s,%s)...", path, element, filter);
 
-        var _element = element;
-        var _filter = filter;
-        var _getFilter = getFilter;
-        this.getValue(path, function(v) { _element.innerHTML = (_filter !== undefined)?_filter(v):v; }, _getFilter);
+        this.getValue(path, function(v) { element.innerHTML = v; }.bind(this), filter);
     }
 
     static httpGet(theUrl, async, callback) {
