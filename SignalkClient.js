@@ -37,7 +37,6 @@ class SignalkClient {
                 this.ws = null;
             }.bind(this);
             this.ws.onmessage = function(evt) { 
-                //console.log("SignalK: websocket message received %s", JSON.stringify(evt.data));
                 var data = JSON.parse(evt.data);
                 if ((data.updates !== undefined) && (data.updates.length > 0)) {
                     data.updates.forEach(update => {
