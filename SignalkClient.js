@@ -160,6 +160,16 @@ class SignalkClient {
         this.getValue(path, function(v) { element.innerHTML = v; }.bind(this), filter);
     }
 
+    async get(theUrl) {
+      var response = await fetch(theUrl);
+      if (response.status == 200) {
+        var result = await response.text();
+        return(result);
+      } else {
+        return(null);
+      }
+    }
+
     static httpGet(theUrl, async, callback) {
         var xmlHttp = new XMLHttpRequest();
         if (async) {
