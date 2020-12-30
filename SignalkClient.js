@@ -72,6 +72,8 @@ class SignalkClient {
                             });
                         }
                     });
+                } else {
+                  //console.log("%o", data);
                 }
             }.bind(this);
         } else {
@@ -204,6 +206,19 @@ class SignalkClient {
         }
     }
 
+    putValue(path, value) {
+      console.log("putValue(%s,%s)...", path, value);
+      var delta = {
+        "context": "vessels.self",
+        "requestId": "184743-434373-348483",
+        "put": {
+          "path": path,
+          "value": value,
+        }
+      };
+      this.ws.send(JSON.stringify(delta));
+    }
+      
     static normalisePath(path) {
         var retval = "/signalk/v1/api/vessels/self/";
         var parts = path.split("[");
