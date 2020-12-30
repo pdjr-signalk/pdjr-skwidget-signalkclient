@@ -16,13 +16,7 @@
 
 class SignalkClient {
 
-  /********************************************************************
-   * Create a new or adopt an existing SignalkClient connection to a
-   * remote Signal K websocket service.
-   *
-   */
-
-  static connect(browser(host=window.top.location.hostname, window.top.location.port) {
+  static connect(host=window.top.location.hostname, port=window.top.location.port) {
     if (window.top.SignalkClient) {
       return(window.top.SignalkClient);
     } else {
