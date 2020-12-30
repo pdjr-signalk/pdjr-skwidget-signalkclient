@@ -16,6 +16,26 @@
 
 class SignalkClient {
 
+  /********************************************************************
+   * Create a new or adopt an existing SignalkClient connection to a
+   * remote Signal K websocket service.
+   *
+   */
+
+  static connect(browser(host=window.top.location.hostname, window.top.location.port) {
+    if (window.top.SignalkClient) {
+      return(window.top.SignalkClient);
+    } else {
+      try {
+        window.top.SignalkClient = new SignalkClient(host, port);
+        return(window.top.SignalkClient);
+      } catch(e) {
+        console.log("SignalkClient: install error (%s)", e);
+      }
+    }
+    return(null)
+  }
+
     constructor(host, port, options={}) {
         if ((options) && (options.debug)) console.log("SignalkClient(%s,%d,%s)...", host, port, options);
 
