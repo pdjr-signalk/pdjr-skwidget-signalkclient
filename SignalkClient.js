@@ -41,7 +41,7 @@ class SignalkClient {
   }
 
   constructor(host, port, debug=false) {
-    if (debug)) console.log("SignalkClient(%s,%d,%d)...", host, port, debug);
+    if (debug) console.log("SignalkClient(%s,%d,%d)...", host, port, debug);
 
     this.host = host;
     this.port = parseInt(port);
@@ -162,7 +162,7 @@ class SignalkClient {
     console.log("signalkclient: registerCallback(%s,%o,%o)...", path, callback, filter);
     if (!path) throw "signalkclient: error: subscription path must be defined";
     if (!callback) throw "signalkclient: error: callback function must be defined";
-    if (!this.ws) throw "signalkclient: error: cannot register subscription because websocket is closed");
+    if (!this.ws) throw "signalkclient: error: cannot register subscription because websocket is closed";
 
     if (this.directory[path] === undefined) {
       this.directory[path] = [];
