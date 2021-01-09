@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>pdjr-skwebapp-tank-monitor</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+
+    <script type="text/javascript" src="lib/page-utils/PageUtils.js"></script>
+    <script type="text/javascript" src="lib/signalk-libsignalkclient/SignalkClient.js"></script>
+    <script type="text/javascript" src="lib/pdjr-skwidget-alarm-popup/AlarmPopup.js"></script>
+    <script type="text/javascript" src="lib/pdjr-skwidget-tank-monitor/TankMonitorWidget.js"></script>
+
+    <link rel="stylesheet" type="text/css" href="index.css">
+    <link rel="stylesheet" type="text/css" href="lib/pdjr-skwidget-alarm-popup/AlarmPopup.css">
+    <link rel="stylesheet" type="text/css" href="lib/pdjr-skwidget-tank-monitor/TankMonitorWidget.css">
+  </head>
+  <script>
+    function init() {
+      PageUtils.noRightClick();
+      var signalkClient = SignalkClient.connect();
+      signalkClient.waitForConnection().then(
+        () => {
+          AlarmPopup.install(signalkClient);
+          TankMonitorWidget.install(signalkClient);
+        },
+        () => {
+          console.log("error initialising Signal K client library");
+        }
+      );
+    }
+  </script>
+  <body onload="init();">
+  </body>
+</html>
