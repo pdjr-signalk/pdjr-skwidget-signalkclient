@@ -5,13 +5,13 @@ described below.
 
 ## SignalikClient
 
-__SignalkClient__ implements a singleton instance which optimises a
-host application's websocket connection to a Signal K server by
-multiplexing a single connection across an arbitrary number of clients
+__SignalkClient__ implements a websocket connection to a Signal K server
+and multiplexes this connection across an arbitrary number of clients
 within the same browser context.
 
-__SignalkClient__ provides methods for programmed and event driven
-access to the remote server's data store.
+The class is designed to be instantiated as a singleton instance and
+provides methods for programmed and event driven access to the remote
+server's data store.
 
 Creating a trivial, webapp that dynamically updates its display can be 
 as simple as:
@@ -43,48 +43,49 @@ as simple as:
 ### SignalkClient.install([_port_[, _host_[, _debug_=false]]])
 
 This factory method prepares an application for access to a remote
-Signak K server by connecting to an existing, connected,
-__SignalkClient__ or, if necessary, creating and connecting a new
-client.
-
-__SignalkClient__ is designed to operate as a singleton instance
-installes under  ```window.top``` and __install__ ensures this
-behaviour and should be the only method an application uses to acquire
-a connection to remote Signal K server.
-In normal circumstances, DO NOT call the class constructor directly.
-
-__install__ checks to see if ```window.top.SignalkClient``` exists and,
-if it does, simply returns a reference to this already installed
+Signak K server either by returning a reference to an existing,
+connected, __SignalkClient__ singleton, or, if necessary, by creating,
+installing, connecting and returning a reference to a new class
 instance.
-If ```window.top.SignalkClient``` is undefined, then __install__
-creates a new __SignalkClient__ instance and installs it as
+The __SignalkClient__ maintained by __install()__ can be found at
 ```window.top.SignalkClient```.
+
+__install()__ should be the only method an application uses to acquire
+a connection to a remote Signal K server: in normal circumstances it
+will never be necessary for an application to call the class constructor
+directly.
 
 _port_ can be used to specify the internet port on which the Signal K
 server offers a websocket service and _host_ can be used to explicitly
 supply a server hostname or IP address. The _debug_ boolean can be used
 to enable trace output to console.log.  
-If either or both <host> and <port> are not supplied then they will
-default to values drawn from the ```window.top.location``` property and
-usually this works pretty well for Signal K webapp applications.
+If either or both _host_ and _port_ are not supplied then they will
+default to values drawn from the ```window.top.location``` property.
+If __SignalkClient__ is being used in a webapp served by the Signal K
+server then calling __install()__ with no arguments works because vanilla
+Signal K server installations offer HTTP and websocket services on the
+same port number.
 
 #### Example
 ```
 try {
   var signalkClient = SignalkClient.install();
+  ...
+  ...
 } catch(e) {
   console.log(e);
 }
 ```
 
-### new SignalkClient(_host_, _port_[, _debug_=false])
+### new SignalkClient(_host_, _port_[, debug_=false])
 
 Creates and returns a new __SignalkClient__ instance and initiates an
 asynchronous connection to the Signal K server at _host_:_port_.
 The boolean _debug_ argument can be used to enable trace output to
 console.log.
 
-You probably don't want to do this: see __install()__ above.
+You probably don't want to use this constructor method: see
+__install()__ above for the reason why.
 
 ### getHost()
    
