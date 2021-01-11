@@ -5,16 +5,13 @@ described below.
 
 ## SignalikClient
 
-__SignalkClient__ provides an efficient websocket connection for
-webapps wanting to interact with a Signal K server.
+__SignalkClient__ implements a singleton instance which optimises a
+host application's websocket connection to a Signal K server by
+multiplexing a single connection across an arbitrary number of clients
+within the same browser context.
 
-The class implements a singleton instance which optimises the
-connection to a remotes server by multiplexing a single connection
-across an arbitrary number of clients within the same browser
-context.
-
-__SignalkClient__ provides mechanisms for accessing and updating data
-on the remote Signal K server and for subscribing to delta updates.
+__SignalkClient__ provides methods for programmed and event driven
+access to the remote server's data store.
 
 Creating a trivial, webapp that dynamically updates its display can be 
 as simple as:
@@ -39,18 +36,22 @@ as simple as:
 </script>
 <body onload="init();">
    <div id="waste"></div>
-   <div id="fuel"></div>
 </body>
 </html>
 ```
 
 ### SignalkClient.install([_port_[, _host_[, _debug_=false]]])
 
-Factory method to perhaps create and install an instance of
-__SignalkClient__ under ```window.top```.
-__install__ should be the only method an application uses to acquire
-a connection to remote Signal K server: DO NOT call the constructor
-directly.
+This factory method prepares an application for access to a remote
+Signak K server by connecting to an existing, connected,
+__SignalkClient__ or, if necessary, creating and connecting a new
+client.
+
+__SignalkClient__ is designed to operate as a singleton instance
+installes under  ```window.top``` and __install__ ensures this
+behaviour and should be the only method an application uses to acquire
+a connection to remote Signal K server.
+In normal circumstances, DO NOT call the class constructor directly.
 
 __install__ checks to see if ```window.top.SignalkClient``` exists and,
 if it does, simply returns a reference to this already installed
