@@ -14,24 +14,82 @@
  * permissions and limitations under the License.
  */
 
+/**********************************************************************
+ * SignalkClient
+ *
+ * SignalkClient provides an efficient websocket connection for webapps
+ * wanting to connect to a Signal K server. The class implements a
+ * singleton client interface and installs it under window.top so that
+ * it can be can by an arbitrary number widgets distributed across an
+ * arbitrary number of webapps in an arbitrary number of windows.
+ *
+ * The class provides mechanisms for accessing and updating data on the
+ * remote server and for subscribing to the severs delta model for
+ * event driven updates.
+ *
+ * Creating a trivial, dynamically updates, display component can be as
+ * simple as:
+ *
+ * <!DOCTYPE html>
+ * <html>
+ * <head>
+ *   <script type="text/javascript" src="SignalkClient.js"></script>
+ * </head>
+ * <script>
+ *   function init() {
+ *     var signalkClient = SignalkClient.install();
+ *     signalkClient.waitForConnection().then(
+ *       () => {
+ *         signalkClient.onValue("tanks.wasteWater.0.currentLevel", "#waste");
+ *       },
+ *       () => {
+ *         console.log("error initialising Signal K client library");
+ *       }
+ *     );
+ *   }
+ * </script>
+ * <body onload="init();">
+ *   <div id="waste"></div>
+ *   <div id="fuel"></div>
+ * </body>
+ * </html>
+ */
+
+
+
+
+
+
 class SignalkClient {
 
   /********************************************************************
-   * If an instance of SignalkClient already exists at
-   * app.top.SignalClient then a reference to it is returned.
+   * SignalkClient.install(host, port[, debug])
    *
-   * If an instance of SignalkClient does not exist at this location,
-   * then a new instance is created and a connecion to the Signal K
-   * server at <host>:<port> is initiated. In this case, a reference
-   * to the newly installed instance is returned or null on error.
+   * Perhaps install an instance of SignalkClient under window.top.
+   *
+   * SignalkClient optimises the connection to a remotes Signal K
+   * server by multiplexing a single connection across an arbitrary
+   * number of clients within the same browser context. This method
+   * checks to see if window.top.SignalkClient exists and, if it does,
+   * simply returns a reference to this already installed instance.
+   *
+   * If window.top.SignalkClient is undefined, then this method creates
+   * a new SignalkClient instance and installs it. For a description of
+   * the method arguments see the following comments relating to the
+   * constructor method. If either or both <host> and <port> are not
+   * supplied then they will default to values drawn from the
+   * window.top.location property.
+   *
+   * In either case, the method returns a reference to
+   * window.top.SignalkClient or throws an error if there is a problem. 
    */
 
-  static install(host=window.top.location.hostname, port=window.top.location.port, debug=false) {
+  static install(host=window.top.location.hostname, port=window.top.location.port, debug=true) {
     if (window.top.SignalkClient) {
       return(window.top.SignalkClient);
     } else {
       try {
-        window.top.SignalkClient = new SignalkClient(host, port, debug);
+        window.top.SignalkClient = new SignalkClient(host, parseInt(port), debug);
         return(window.top.SignalkClient);
       } catch(e) {
         console.log(e);
@@ -40,8 +98,28 @@ class SignalkClient {
     return(null)
   }
 
+  /********************************************************************
+   * new SignalkClient(host, port[, debug])
+   *
+   * Create and return a new SignalkClient instance and initiate an
+   * asynchronous connection to the Signal K server at <host>:<port>.
+   * See isConnected() and waitForConnection() for methods which
+   * support detection of when the connection completes.
+   *
+   * The boolean <debug> argument can be used to enable trace output to
+   * console.log.
+   *
+   * The directory holds entries with three properties:
+   * callback:    is the unique identifier associated with the callback
+   *              and ensures that duplicate entries do not occur.
+   * appcallback: the function that should be called when an upade
+   *             appears in the associated path.
+   * simple:     true to pass just a value to callback; false to pass
+   *             an object { source, timestamp, value }.
+   */
+
   constructor(host, port, debug=false) {
-    if (debug)) console.log("SignalkClient(%s,%d,%d)...", host, port, debug);
+    if (debug) console.log("SignalkClient(%s,%d,%s)...", host, port, debug);
 
     this.host = host;
     this.port = parseInt(port);
@@ -71,7 +149,9 @@ class SignalkClient {
                 var path = updateValue.path;
                 var value = updateValue.value;
                 if ((path !== undefined) && (value !== undefined) && (this.directory[path] !== undefined)) {
-                  this.directory[path].forEach(callback => callback({ "source": source, "timestamp": timestamp, "value": value }));
+                  this.directory[path].forEach(entry => {
+                    entry.callback(entry.appcallback, (entry.simple)?value:{ "source": source, "timestamp": timestamp, "value": value });
+                  });
                 }
               });
             }
@@ -81,41 +161,65 @@ class SignalkClient {
         }
       }.bind(this);
     } else {
-      throw "signalkclient: error: invalid host specification";
+      throw "SignalkClient: invalid host specification";
     }
   }
 
   /********************************************************************
-   * Return the hostname of the remote Signal K server connection.
+   * getHost()
+   *
+   * Get the string that was passed to the constructor as its <host>
+   * argument.
    */
 
   getHost() {
+    if (this.debug) console.log("signalkclient.getHost()...");
     return(this.host);
   }
 
   /********************************************************************
-   * Return the port number of the remote Signal K server connection.
+   * getPort()
+   *
+   * Get the number that was passed to the constructor as its <port>
+   * argument.
    */
 
   getPort() {
+    if (this.debug) console.log("signalkclient.getPort()...");
     return(this.port);
   }
 
   /********************************************************************
-   * Returns true if the client has an open connection to the server.
+   * isConnected()
+   *
+   * Get a boolean representing whether or not the instance has an
+   * active websocket connection to the Signal K server.
    */
 
   isConnected() {
+    if (this.debug) console.log("signalkclient.isConnected()...");
     return(this.ws != null);
   }
 
   /********************************************************************
-   * Returns a promise that resolves if/when the server connection is/
-   * becomes open. The polling interval for the connection check can
-   * be set with <timeout>.
+   * waitForConnection[timeout])
+   *
+   * Get a promise that resolves if/when the server connection
+   * is/becomes open. The polling interval for the connection check can
+   * be set with <timeout>. For example:
+   *
+   * (new SignalkClient()).waitForConnection().then(
+   *   () => { ...do my application stuff... },
+   *   () => { ...acknowledge failure... }
+   * );
+   *
+   * This is the recommended top-level pattern for an application that
+   * used SignalkClient. 
    */
 
   waitForConnection(timeout=500) {
+    if (this.debug) console.log("signalkclient.waitForConnection(%d)...", timeout);
+
     const poll = resolve => {
       if (this.ws.readyState === WebSocket.OPEN) { resolve(); } else { setTimeout(_ => poll(resolve), timeout); }
     }
@@ -123,46 +227,105 @@ class SignalkClient {
   }
 
   /********************************************************************
-   * Requests a list of all server keys and returns this as an array
-   * to <callback>.
+   * getAvailablePaths(callback)
+   *
+   * Recover the currently available server paths and pass them as an
+   * array to the <callback> function.
    */
 
-  getEndpoints(callback) {
-    var everything = this.getValue("", undefined, v=>v);
-    callback(this.getPath(everything, "", []));
-  }
-    
-  getPath(tree, value, accumulator) {
-    if ((tree) && (typeof tree === "object")) {
-      var keys = Object.keys(tree);
-      if ((keys.length > 0) && (!keys.includes("value"))) {
-        keys.forEach(key => {
-          accumulator = this.getPath(tree[key], (value + ((value.length > 0)?".":"") + key), accumulator);
-        });
-      } else {
-        accumulator.push(value);
-      }
-    } else {
-      accumulator.push(value);
-    }
-    return(accumulator);
-  }
+  getAvailablePaths(callback) {
+    if (this.debug) console.log("signalkclient.getAvailablePaths(%o)...", callback);
 
-  subscribe(path, callback, filter) {
-    this.registerCallback(path, callback, filter);
+    if (!callback) throw "signalkclient.getValue: callback must be specified";
+
+    this.getValue("", (v) => { callback(SignalkClient.getPath(v)); }, (v) => v);
   }
 
   /********************************************************************
-   * Registers a <callback> function against a Signal K <path>. The
-   * <callback> will receive delta updates from the server which can
-   * optionally be processed using a <filter> function.
+   * getValue(path, callback[, filter])
+   *
+   * Get the current value of <path> from the Signal K server and
+   * process it dependent on the type of <callbck> in the following
+   * way:
+   *
+   * | Type of <callback> | Action                                    |
+   * |:-------------------|:------------------------------------------|
+   * | function           | Call <callback> with the recovered value  |
+   * |                    | as its only argument.                     |
+   * | string             | Convert <callback> into an HTMLElement    |
+   * |                    | using document.querySelector(<callback>)  |
+   * |                    | and process further.                      |
+   * | HTMLElement        | Replace the HTML content of <callback>    |
+   * |                    | with the returned value.                  |
+   * | object             | Call <callback>.update() with the         |
+   * |                    | returned value as argument.               |
+   *
+   * If <filter> is not specified and the value of <path> is an object
+   * containing a 'value' property then the result will be the value of
+   * <path>'s 'value' property, otherwise it will simply be the value
+   * of <path>. This allows a <path> like "tanks.fuel.0.currentLevel"
+   * to act as an alias for "tanks.fuel.0.currentLevel.value".
+   *
+   * If a <filter> is defined, then it must be a function taking a
+   * single argument. The value of <path> will be transformed by
+   * <filter> before use. So, if you want to recover the complete
+   * object returned from a path like "tanks.fuel.0.currentLevel" it is
+   * necessary to pass the identity function as <filter>.
    */
 
-  registerCallback(path, callback, filter) {
-    console.log("signalkclient: registerCallback(%s,%o,%o)...", path, callback, filter);
-    if (!path) throw "signalkclient: error: subscription path must be defined";
-    if (!callback) throw "signalkclient: error: callback function must be defined";
-    if (!this.ws) throw "signalkclient: error: cannot register subscription because websocket is closed");
+  getValue(path, callback, filter=undefined) {
+    if (this.debug) console.log("signalkclient.getValue(%s,%o,%o)...", path, callback, filter);
+
+    //if (!path) throw "signalkclient.getValue: subscription path must be defined";
+    if (!callback) throw "signalkclient.getValue: callback must be specified";
+
+    SignalkClient.httpGet(SignalkClient.normalisePath(path), (v) => {
+      v = JSON.parse(v);
+      SignalkClient.performAction(callback, ((filter)?filter(v):((v.value)?v.value:v)));
+    });
+  }
+
+  /********************************************************************
+   * putValue(path, value)
+   *
+   * Send a PUT delta requesting that <path> be updated with <value>.
+   * Returns a request id which may be used to match up any response.
+   */
+
+  putValue(path, value) {
+    if (this.debug) console.log("signalkclient.putValue(%s,%o)...", path, value);
+
+    if (!path) throw "signalkclient.putValue: path must be defined";
+    if (!value) throw "signalkclient.putValue: value must be specified";
+
+    var random = new Uint32Array(3); window.crypto.getRandomValues(random);
+    var uuid = "" + random[0] + "-" + random[1] + "-" + random[2];
+    var delta = { "context": "vessels.self", "requestId": uuid, "put": { "path": path, "value": value, } };
+    this.ws.send(JSON.stringify(delta));
+    return(uuid);
+  }
+
+  /********************************************************************
+   * onValue(path, callback[, filter[, simple]])
+   *
+   * Registers <callback> so that it will receive data updates from the
+   * server each time the value of <path> changes. See getValue()
+   * above for a description of how <callback> and <filter> arguments
+   * can be used to tweak the returned value and how it is processed.
+   *
+   * The recovered value made available to the application is usually
+   * just the simple, undecorated, value recovered from the server and
+   * after any processing by <filter>. Setting <simple> to false will
+   * cause the application to receive instead an object of the form
+   * { value, source, timestamp }.
+   */
+
+  onValue(path, callback, filter=undefined, simple=true) {
+    console.log("signalkclient..onValue(%s,%o,%o,%s)...", path, callback, filter, simple);
+
+    if (!path) throw "signalkclient.onValue: subscription path must be defined";
+    if (!callback) throw "signalkclient.onValue: callback must be defined";
+    if (!this.ws) throw "signalkclient.onValue: cannot register subscription because websocket is closed";
 
     if (this.directory[path] === undefined) {
       this.directory[path] = [];
@@ -171,80 +334,23 @@ class SignalkClient {
       this.ws.send(JSON.stringify(msg));
     }
 
-    if (!this.directory[path].includes(callback)) {
-      this.directory[path].push((v) => {
-        v = (filter)?filter(v):((v.value !== undefined)?v.value:v);
-        switch (typeof callback) {
-          case "object": callback.update(v); break;
-          case "function": callback(v); break;
-          default: break;
-        }
-      });
+    if (!this.directory[path].map(e => e.appcallback).includes(callback)) {
+      this.directory[path].push({ appcallback: callback, simple: simple, callback: (actor, v) => {
+        SignalkClient.performAction(actor, (filter)?filter(v):((v.value !== undefined)?v.value:v));
+      }});
     } else {
       console.log("signalkclient: warning: refusing to register a duplicate callback");
     }
   }
-
-  registerInterpolation(path, element, filter) {
-    //console.log("registerInterpolation(%s,%s,%s)...", path, element, filter);
- 
-    this.registerCallback(path, function(v) { element.innerHTML = v; }.bind(this), filter);
-  }
-
+    
   /********************************************************************
-   * Recovers a value from the host server data tree.
-   *
-   * If a <filter> function is defined, then the returned value is
-   * passed directly to <filter> as its only argument. <filter> should
-   * process and promptly return the processed value.
-   *
-   * If a <filter> function is not defined: if the the returned value
-   * has a property called 'value' then value.value becomes the result,
-   * otherwise value is returned as the result.
-   *
-   * value is filtered through <filter> if specified.
-   * @param path is a key under vessels.self.
-   * @callback is either a function , returning it
-   * directly or through <callback>. <path> specifies a path under
-   * vessels.self 
+   * LEGACY METHODS AND ALIASES
    */
 
-  getValue(path, callback, filter) {
-    if (this.debug) console.log("signalkclient: getValue(%s,%o,%o)...", path, callback, filter);
-
-    var retval = null
-    
-    SignalkClient.httpGet(SignalkClient.normalisePath(path), (v) => {
-      v = JSON.parse(v);
-      v = (filter)?filter(v):((v.value !== undefined)?v.value:v);
-      if (callback !== undefined) {
-        switch (typeof callback) {
-          case "object": callback.update(v); break;
-          case "function": callback(v); break;
-          default: break;
-        }
-      } else {
-        retval = v;
-      }
-    });
-    return(retval);
-  }
-
-  interpolateValue(path, element, filter) {
-    //console.log("interpolateValue(%s,%s,%s)...", path, element, filter);
-
-    this.getValue(path, function(v) { element.innerHTML = v; }.bind(this), filter);
-  }
-
-  async get(theUrl) {
-    var response = await fetch(theUrl);
-    if (response.status == 200) {
-      var result = await response.text();
-      return(result);
-    } else {
-      return(null);
-    }
-  }
+  getEndpoints() { this.getAvailablePaths(); }
+  getSelfPath(path, callback, filter=undefined) { this.getValue(path, callback, filter); }
+  registerCallback(path, callback, filter=undefined) { this.onValue(path, callback, filter); }
+  registerInterpolation(path, element, filter=undefined) { this.interpolateValue(path, element, filter); }
 
   /********************************************************************
    * Asynchronously recover the document returned by an HTTP GET on
@@ -254,27 +360,28 @@ class SignalkClient {
 
   static httpGet(url, callback) {
     var xmlHttp = new XMLHttpRequest();
-    xmlHttp.onreadystatechange = function() { callback((xmlHttp.readyState == 4 && xmlHttp.status == 200)?xmlHttp.responseText:null); };
+    xmlHttp.onreadystatechange = function() { if (xmlHttp.readyState == 4 && xmlHttp.status == 200) callback(xmlHttp.responseText); };
     xmlHttp.open("GET", url, true);
     xmlHttp.send();
   }
 
-  /********************************************************************
-   * Send a PUT delta requesting that <path> be updated with <value>.
-   * Returns an identifier for the request which may be used to match
-   * up any response.
-   */
-
-  putValue(path, value) {
-    if (debug) console.log("signalkclient: putValue(%s,%o)...", path, value);
-    var requestId = "184743-434373-348483";
-    var delta = {
-      "context": "vessels.self",
-      "requestId": requestId,
-      "put": { "path": path, "value": value, }
-    };
-    this.ws.send(JSON.stringify(delta));
-    return(requestId);
+  static performAction(actor, value) {
+    if (typeof actor == "string") actor = document.querySelector(actor);
+    switch (typeof actor) {
+      case "object":
+        if (actor instanceof HTMLElement) {
+          actor.innerHTML = value;
+        } else {
+          actor.update(value);
+        }
+        break;
+      case "function":
+        actor(value);
+        break;
+      default:
+        throw "signalkclient: performaction: invalid actor";
+        break;
+    }
   }
     
   /********************************************************************
@@ -290,6 +397,22 @@ class SignalkClient {
     retval += parts[0].replace(/\./g, "/");
     if (parts[1] !== undefined) retval += ("[" + parts[1]);
     return(retval);
+  }
+
+  static getPath(tree, value="", accumulator=[]) {
+    if ((tree) && (typeof tree === "object")) {
+      var keys = Object.keys(tree);
+      if ((keys.length > 0) && (!keys.includes("value"))) {
+        keys.forEach(key => {
+          accumulator = SignalkClient.getPath(tree[key], (value + ((value.length > 0)?".":"") + key), accumulator);
+        });
+      } else {
+        accumulator.push(value);
+      }
+    } else {
+      accumulator.push(value);
+    }
+    return(accumulator);
   }
 
 }
