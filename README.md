@@ -3,7 +3,7 @@
 The __pdjr-skwidget-signalkclient__ library has a single member class
 described below.
 
-## SignalikClient
+## SignalkClient
 
 __SignalkClient__ implements a websocket connection to a Signal K server
 and multiplexes this connection across an arbitrary number of clients
@@ -42,11 +42,11 @@ as simple as:
 
 ### SignalkClient.install([_port_[, _host_[, _debug_=false]]])
 
-This factory method prepares an application for access to a remote
-Signak K server either by returning a reference to an existing,
-connected, __SignalkClient__ singleton, or, if necessary, by creating,
-installing, connecting and returning a reference to a new class
-instance.
+__install()__ is a factory method which prepares an application for
+access to a remote Signak K server either by returning a reference to
+an existing, connected, __SignalkClient__ singleton, or, if necessary,
+by creating, installing, connecting and returning a reference to a new
+class instance.
 The __SignalkClient__ maintained by __install()__ can be found at
 ```window.top.SignalkClient```.
 
@@ -85,7 +85,7 @@ The boolean _debug_ argument can be used to enable trace output to
 console.log.
 
 You probably don't want to use this constructor method: see
-__install()__ above for the reason why.
+__install()__ above for the reasons why.
 
 ### getHost()
    
@@ -127,7 +127,8 @@ var signalkClient = new SignalkClient();
 
 signalkClient.waitForConnection().then(
   () => {
-     ...do my application stuff...
+     console.log("Connected!");
+     // Do other application stuff...
   },
   () => { console.log("Connection failed"); }
 );
@@ -147,11 +148,11 @@ signalkServer.getAvailablePaths((paths) => {
 });
 ```
 
-### getValue(_path_, _callback_[, _filter_])
+### getValue(_path_, _callback_[, filter_])
 
 Get the current value of _path_ from the Signal K server, transform it
-through _filter_ (if supplied) and process it dependent on the type of
-_callback_.
+through _filter_ (if supplied) and process it in a way that depends on
+the type of _callback_.
 
 If _filter_ is not specified and the value of _path_ is an object
 containing a 'value' property then the path value will be transformed
@@ -179,8 +180,9 @@ table.
 
 #### Example
 
-The following example updates the DOM element with id='tank-level'
-with the percentage level in the waste tank. 
+The following example updates the content of the DOM element identified
+by an id attribute of 'tank-level' with the percentage level in the
+waste tank. 
 ```
 signalkClient.getValue("tanks.wasteLevel.0.currentLevel", "#tank-level", (v) => (v * 100).toFixed(0));
 ```
