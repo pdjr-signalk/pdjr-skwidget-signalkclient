@@ -84,7 +84,7 @@ class SignalkClient {
    * window.top.SignalkClient or throws an error if there is a problem. 
    */
 
-  static install(host=window.top.location.hostname, port=window.top.location.port, debug=true) {
+  static install(host=window.top.location.hostname, port=window.top.location.port, debug=false) {
     if (window.top.SignalkClient) {
       return(window.top.SignalkClient);
     } else {
@@ -285,6 +285,20 @@ class SignalkClient {
     });
   }
 
+  getValueAsync(path, filter=undefined) {
+    if (this.debug) console.log("signalkclient.getValueAsync(%s,%o)...", path, filter);
+
+    //if (!path) throw "signalkclient.getValue: subscription path must be defined";
+
+    var retval = SignalkClient.httpGetAsync(SignalkClient.normalisePath(path));
+    if (retval) {
+      retval = JSON.parse(retval);
+      retval = (filter)?filter(retval):((retval.value)?retval.value:retval);
+    }
+    return(retval);
+  }
+
+
   /********************************************************************
    * putValue(path, value)
    *
@@ -321,7 +335,7 @@ class SignalkClient {
    */
 
   onValue(path, callback, filter=undefined, simple=true) {
-    console.log("signalkclient..onValue(%s,%o,%o,%s)...", path, callback, filter, simple);
+    if (this.debug) console.log("signalkclient..onValue(%s,%o,%o,%s)...", path, callback, filter, simple);
 
     if (!path) throw "signalkclient.onValue: subscription path must be defined";
     if (!callback) throw "signalkclient.onValue: callback must be defined";
@@ -351,6 +365,13 @@ class SignalkClient {
   getSelfPath(path, callback, filter=undefined) { this.getValue(path, callback, filter); }
   registerCallback(path, callback, filter=undefined) { this.onValue(path, callback, filter); }
   registerInterpolation(path, element, filter=undefined) { this.interpolateValue(path, element, filter); }
+
+  static httpGetAsync(url) {
+    var xmlHttp = new XMLHttpRequest();
+    xmlHttp.open('GET', url, false);
+    xmlHttp.send(null);
+    return((xmlHttp.status === 200)?xmlHttp.responseText:null);
+  }
 
   /********************************************************************
    * Asynchronously recover the document returned by an HTTP GET on
