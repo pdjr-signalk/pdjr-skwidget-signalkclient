@@ -1,7 +1,6 @@
 # pdjr-skwidget-signalkclient
 
-The __pdjr-skwidget-signalkclient__ library has a single member class
-described below.
+The __pdjr-skwidget-signalkclient__ library has a single member class.
 
 ## SignalkClient
 
@@ -137,16 +136,29 @@ signalkClient.waitForConnection().then(
 This is the recommended top-level pattern for an application that uses
 __SignalkClient__. 
 
-### getAvailablePaths(_callback_)
+### getAvailablePaths(_callback_[,_regex_])
 
-Recover all the currently available server paths and pass them as an
-array to the _callback_ function.
+With no arguments, recovers all the currently available server paths and
+passes them as an array to the _callback_ function.
+
+If _regex_ is specified, the returned list is filtered so that it only
+includes entries which match the supplied regular expression.
 
 #### Example
 ```
 signalkServer.getAvailablePaths((paths) => {
   console.log("There are %d available paths", paths.length);
 });
+```
+
+### getAvailablePathsSync([_regex_])
+
+Synchronous version of __getAvailablePaths()__ which returns an array
+of currently available server paths.
+
+#### Example
+```
+var paths = signalkClient.getAvailablePathsSync(/^tanks\..*/);
 ```
 
 ### getValue(_path_, _callback_[, filter_])
