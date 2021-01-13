@@ -254,3 +254,7 @@ __getEndpoints()__ (replaced by __getAvailablePaths()__).\
 __getSelfPath(_path_, _callback_[, _filter_=undefined])__ (replaced by __getValue()__).\
 __registerCallback(_path_, _callback_[, _filter_=undefined])__ (replaced by __onValue()__).\
 __registerInterpolation(_path_, _element_[, _filter_=undefined])__ (replaced by __onValue()__).
+
+### Author
+
+Paul Reeve <preeve@pdjr.eu>
