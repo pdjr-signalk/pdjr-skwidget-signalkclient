@@ -8,10 +8,11 @@ described below.
 __SignalkClient__ implements a websocket connection to a Signal K server
 and multiplexes this connection across an arbitrary number of clients
 within the same browser context.
+The class is designed to be instantiated as a singleton instance at the
+top level of the host browser context.
 
-The class is designed to be instantiated as a singleton instance and
-provides methods for programmed and event driven access to the remote
-server's data store.
+The class provides methods for synchronous, asynchronous and event
+driven access to the remote Signal K server's data store.
 
 Creating a trivial, webapp that dynamically updates its display can be 
 as simple as:
