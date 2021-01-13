@@ -257,4 +257,4 @@ __registerInterpolation(_path_, _element_[, _filter_=undefined])__ (replaced by 
 
 ### Author
 
-Paul Reeve <preeve@pdjr.eu>
+Paul Reeve <<preeve@pdjr.eu>>
