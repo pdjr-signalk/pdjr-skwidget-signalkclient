@@ -101,19 +101,31 @@ class SignalkClient {
     return new Promise(poll);
   }
 
-  getAvailablePaths(callback) {
-    if (this.debug) console.log("signalkclient.getAvailablePaths(%o)...", callback);
+  getAvailablePaths(callback, regex=undefined) {
+    if (this.debug) console.log("signalkclient.getAvailablePaths(%o,%s)...", callback, regex);
 
-    if (!callback) throw "signalkclient.getValue: callback must be specified";
+    if (callback === undefined) throw "signalkclient.getValue: callback must be specified";
 
-    this.getValue("", (v) => { callback(SignalkClient.getPath(v)); }, (v) => v);
+    this.getValue("", (v) => { 
+      v = SignalkClient.getPath(v);
+      v = (regex === undefined)?v:v.filter(e => RegExp(regex).test(e));
+      callback(v);
+    }, (v) => v);
+  }
+
+  getAvailablePathsSync(regex=undefined) {
+    if (this.debug) console.log("signalkclient.getAvailablePathsSync(%s)...", regex);
+
+    var retval = SignalkClient.getPath(this.getValueSync(""));
+    retval = (regex === undefined)?retval:retval.filter(e => RegExp(regex).test(e));
+    return(retval);
   }
 
   getValue(path, callback, filter=undefined) {
     if (this.debug) console.log("signalkclient.getValue(%s,%o,%o)...", path, callback, filter);
 
     //if (!path) throw "signalkclient.getValue: subscription path must be defined";
-    if (!callback) throw "signalkclient.getValue: callback must be specified";
+    if (callback === undefined) throw "signalkclient.getValue: callback must be specified";
 
     SignalkClient.httpGet(SignalkClient.normalisePath(path), (v) => {
       v = JSON.parse(v);
@@ -121,12 +133,12 @@ class SignalkClient {
     });
   }
 
-  getValueAsync(path, filter=undefined) {
-    if (this.debug) console.log("signalkclient.getValueAsync(%s,%o)...", path, filter);
+  getValueSync(path, filter=undefined) {
+    if (this.debug) console.log("signalkclient.getValueSync(%s,%o)...", path, filter);
 
     //if (!path) throw "signalkclient.getValue: subscription path must be defined";
 
-    var retval = SignalkClient.httpGetAsync(SignalkClient.normalisePath(path));
+    var retval = SignalkClient.httpGetSync(SignalkClient.normalisePath(path));
     if (retval) {
       retval = JSON.parse(retval);
       retval = (filter)?filter(retval):((retval.value)?retval.value:retval);
@@ -148,7 +160,7 @@ class SignalkClient {
   }
 
   onValue(path, callback, filter=undefined, simple=true) {
-    if (this.debug) console.log("signalkclient..onValue(%s,%o,%o,%s)...", path, callback, filter, simple);
+    if (this.debug) console.log("signalkclient.onValue(%s,%o,%o,%s)...", path, callback, filter, simple);
 
     if (!path) throw "signalkclient.onValue: subscription path must be defined";
     if (!callback) throw "signalkclient.onValue: callback must be defined";
@@ -182,7 +194,7 @@ class SignalkClient {
     xmlHttp.send();
   }
 
-  static httpGetAsync(url) {
+  static httpGetSync(url) {
     var xmlHttp = new XMLHttpRequest();
     xmlHttp.open('GET', url, false);
     xmlHttp.send(null);
