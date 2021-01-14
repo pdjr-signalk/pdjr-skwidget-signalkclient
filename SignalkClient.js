@@ -62,7 +62,7 @@ class SignalkClient {
                 var value = updateValue.value;
                 if ((path !== undefined) && (value !== undefined) && (this.directory[path] !== undefined)) {
                   this.directory[path].forEach(entry => {
-                    entry.callback(entry.appcallback, (entry.simple)?value:{ "source": source, "timestamp": timestamp, "value": value });
+                    entry.callback(entry.appcallback, { "source": source, "timestamp": timestamp, "value": value });
                   });
                 }
               });
@@ -159,7 +159,7 @@ class SignalkClient {
     return(uuid);
   }
 
-  onValue(path, callback, filter=undefined, simple=true) {
+  onValue(path, callback, filter=undefined) {
     if (this.debug) console.log("signalkclient.onValue(%s,%o,%o,%s)...", path, callback, filter, simple);
 
     if (!path) throw "signalkclient.onValue: subscription path must be defined";
@@ -174,7 +174,7 @@ class SignalkClient {
     }
 
     if (!this.directory[path].map(e => e.appcallback).includes(callback)) {
-      this.directory[path].push({ appcallback: callback, simple: simple, callback: (actor, v) => {
+      this.directory[path].push({ appcallback: callback, callback: (actor, v) => {
         SignalkClient.performAction(actor, (filter)?filter(v):((v.value !== undefined)?v.value:v));
       }});
     } else {
