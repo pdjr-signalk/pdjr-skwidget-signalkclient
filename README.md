@@ -200,7 +200,7 @@ waste tank.
 signalkClient.getValue("tanks.wasteLevel.0.currentLevel", "#tank-level", (v) => (v * 100).toFixed(0));
 ```
 
-### getValueSync(_path_[, _filter_])
+### getValueSync(_path_[, filter_])
 
 Like __getValue()__ except the value of the specified _path_ value is
 recovered synchronously and returned as the function result after
@@ -216,20 +216,17 @@ var level = signalkClient.getValueSync("tanks.fuel.3");
 Send a PUT delta requesting that _path_ be updated with _value_.
 Returns a request id string which may be used to match up any response.
 
-### onValue(_path_, _callback_[, _filter_[, _simple_]])
+### onValue(_path_, _callback_[, filter_])
 
 Registers _callback_ so that it will receive updates each time the
 value of _path_ changes.
-See __getValue()__ above for a description of how _callback_ and
-_filter_ arguments can be used to tweak the recovered values and how
-they will be processed.
 
 The recovered value made available to _callback_ is usually just the
-simple, undecorated, value recovered from the server after any
-processing by _filter_.
-Setting _simple_ to false will cause the application to receive
-instead an object with properties __value__, __source__ and
-__timestamp__ derived from the received delta update.
+simple, unwrapped, value recovered from the server.
+
+If _filter_ is specified, then it will receive the entire delta object
+as its argument from which the __value__, __source__ and __timestamp__
+properties can be extracted.
 
 #### Example
 ```
